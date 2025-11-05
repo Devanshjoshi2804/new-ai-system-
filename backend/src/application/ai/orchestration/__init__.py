@@ -12,6 +12,9 @@ This module coordinates all phases of autonomous API onboarding:
 Main Components:
 - AutonomousOrchestrator: Coordinates full workflow
 - ExecutionEngine: Intelligent test execution
+- LearningLoop: Continuous improvement and pattern storage
+- PerformanceMonitor: Real-time metrics and alerting
+- ModelRegistry: ML model version management
 - Types: Data structures and enums
 """
 
@@ -36,11 +39,26 @@ from .execution_engine import (
     RateLimiter
 )
 
+from .learning_loop import LearningLoop
+
+from .performance_monitor import (
+    PerformanceMonitor,
+    PerformanceSnapshot,
+    Alert
+)
+
+from .model_registry import (
+    ModelRegistry,
+    ModelVersion,
+    ModelStatus
+)
+
 __all__ = [
     # Enums
     'OrchestrationPhase',
     'OperationStatus',
     'TestStatus',
+    'ModelStatus',
     # Data classes
     'OrchestrationResult',
     'PhaseProgress',
@@ -49,9 +67,15 @@ __all__ = [
     'AuthConfiguration',
     'DependencyGraph',
     'ExecutionContext',
+    'PerformanceSnapshot',
+    'Alert',
+    'ModelVersion',
     # Main components
     'AutonomousOrchestrator',
     'ExecutionEngine',
     'CircuitBreaker',
-    'RateLimiter'
+    'RateLimiter',
+    'LearningLoop',
+    'PerformanceMonitor',
+    'ModelRegistry'
 ]
