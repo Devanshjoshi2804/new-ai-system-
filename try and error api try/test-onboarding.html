@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Onboarding APIs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 30px; }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        h2 { color: #667eea; margin-bottom: 15px; font-size: 20px; }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover { background: #5568d3; }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { border-left-color: #4caf50; }
+        .error { border-left-color: #f44336; }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        textarea { min-height: 100px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Onboarding + KYC API Test Suite</h1>
+
+        <div class="test-section">
+            <h2>1. Health Check</h2>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <div id="healthResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Start Session</h2>
+            <button onclick="testStart()">Start New Session</button>
+            <div id="startResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Send Message</h2>
+            <input type="text" id="sessionId" placeholder="Session ID (auto-filled from previous test)" />
+            <input type="text" id="message" placeholder="Message (e.g., test@example.com)" />
+            <button onclick="testMessage()">Send Message</button>
+            <div id="messageResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Upload GST PDF</h2>
+            <p style="margin-bottom: 10px; color: #666;">Upload your GST certificate PDF to test extraction:</p>
+            <input type="file" id="gstFile" accept="application/pdf,.pdf" />
+            <button onclick="testGSTUpload()">Upload & Extract</button>
+            <div id="gstResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. Complete Flow Simulation</h2>
+            <p style="margin-bottom: 15px; color: #666;">Test the entire onboarding flow programmatically:</p>
+            <button onclick="runCompleteFlow()">Run Complete Flow</button>
+            <div id="flowResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. Backend API Tests (Direct)</h2>
+            <p style="margin-bottom: 15px; color: #666;">Test the actual Cargo and Wallet APIs:</p>
+            <button onclick="testCargoAPI()">Test Cargo API</button>
+            <button onclick="testWalletAPI()">Test Wallet API</button>
+            <div id="backendResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let currentSessionId = null;
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testStart() {
+            const resultDiv = document.getElementById('startResult');
+            resultDiv.textContent = 'Starting session...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/onboarding/start`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSessionId = data.sessionId;
+                    document.getElementById('sessionId').value = currentSessionId;
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testMessage() {
+            const resultDiv = document.getElementById('messageResult');
+            const sessionId = document.getElementById('sessionId').value;
+            const message = document.getElementById('message').value;
+            
+            if (!sessionId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please start a session first or enter a session ID';
+                return;
+            }
+
+            if (!message) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter a message';
+                return;
+            }
+            
+            resultDiv.textContent = 'Sending message...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/onboarding/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.className = 'result error';
+                }
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGSTUpload() {
+            const resultDiv = document.getElementById('gstResult');
+            const fileInput = document.getElementById('gstFile');
+            const sessionId = document.getElementById('sessionId').value || currentSessionId;
+            
+            if (!sessionId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please start a session first';
+                return;
+            }
+
+            if (!fileInput.files[0]) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please select a PDF file';
+                return;
+            }
+            
+            resultDiv.textContent = 'Uploading and extracting GST data...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('sessionId', sessionId);
+
+                const response = await fetch(`${API_BASE}/onboarding/upload-gst`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ GST Data Extracted!\n\n${JSON.stringify(data.gstData, null, 2)}\n\n--- Response ---\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function runCompleteFlow() {
+            const resultDiv = document.getElementById('flowResult');
+            resultDiv.textContent = 'Running complete flow...\n\n';
+            
+            try {
+                // Step 1: Start
+                resultDiv.textContent += '1. Starting session...\n';
+                let response = await fetch(`${API_BASE}/onboarding/start`, { method: 'POST' });
+                let data = await response.json();
+                const sessionId = data.sessionId;
+                resultDiv.textContent += `   ✓ Session ID: ${sessionId}\n\n`;
+
+                // Step 2: Email
+                resultDiv.textContent += '2. Submitting email...\n';
+                response = await fetch(`${API_BASE}/onboarding/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message: 'test@addadelta.com' })
+                });
+                data = await response.json();
+                resultDiv.textContent += `   ✓ ${data.text?.substring(0, 50)}...\n\n`;
+
+                // Step 3: Mobile
+                resultDiv.textContent += '3. Submitting mobile...\n';
+                response = await fetch(`${API_BASE}/onboarding/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message: '9876543210' })
+                });
+                data = await response.json();
+                resultDiv.textContent += `   ✓ ${data.text?.substring(0, 50)}...\n\n`;
+
+                // Note: GST upload would require actual file
+                resultDiv.textContent += '4. GST Upload - (upload PDF manually above)\n\n';
+
+                resultDiv.textContent += '✅ Flow test complete!\n\n';
+                resultDiv.textContent += 'Continue by uploading GST PDF in section 4 above.';
+                
+                document.getElementById('sessionId').value = sessionId;
+                currentSessionId = sessionId;
+
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `\n❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testCargoAPI() {
+            const resultDiv = document.getElementById('backendResult');
+            resultDiv.textContent = 'Testing Cargo API...\n\n';
+            
+            try {
+                const testPayload = {
+                    type: "SELLER",
+                    subTypes: ["FTL"],
+                    email: `test${Date.now()}@example.com`,
+                    name: "Test User",
+                    companyName: "Test Company",
+                    mobile: "9876543210",
+                    password: "Test@123456",
+                    transporterIds: { air: null, surface: null, rail: null },
+                    addresses: [],
+                    serviceAreas: [],
+                    logoUrl: null,
+                    metadata: []
+                };
+
+                const response = await fetch('https://qaapis2.delcaper.com/cargo-api/onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testPayload)
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 201 || response.status === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Cargo API Working!\n\nStatus: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `⚠️ Cargo API Response:\n\nStatus: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testWalletAPI() {
+            const resultDiv = document.getElementById('backendResult');
+            resultDiv.textContent = 'Testing Wallet API...\n\n';
+            resultDiv.textContent += 'Note: This requires an existing vendor/KYC ID from Cargo API.\n\n';
+            
+            resultDiv.className = 'result';
+            resultDiv.textContent += 'Please run Cargo API test first to get a vendor code, then update the KYC test endpoint.';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GST Onboarding Assistant | Smart KYC Chatbot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="bot-avatar">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <circle cx="16" cy="16" r="16" fill="#4F46E5"/>
+                        <path d="M16 8C12.686 8 10 10.686 10 14V16C10 19.314 12.686 22 16 22C19.314 22 22 19.314 22 16V14C22 10.686 19.314 8 16 8Z" fill="white"/>
+                        <circle cx="13" cy="15" r="1.5" fill="#4F46E5"/>
+                        <circle cx="19" cy="15" r="1.5" fill="#4F46E5"/>
+                        <path d="M13 18C13 18 14 19 16 19C18 19 19 18 19 18" stroke="#4F46E5" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="header-info">
+                    <h1 class="header-title">GST Onboarding Assistant</h1>
+                    <p class="header-status">
+                        <span class="status-dot"></span>
+                        <span id="botStatus">Online</span>
+                    </p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" id="settingsBtn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16.25 10C16.25 10.625 16.875 11.25 17.5 11.25V13.75C16.875 13.75 16.25 14.375 16.25 15V17.5H13.75C13.75 16.875 13.125 16.25 12.5 16.25H10H7.5C6.875 16.25 6.25 16.875 6.25 17.5H3.75V15C3.75 14.375 3.125 13.75 2.5 13.75V11.25C3.125 11.25 3.75 10.625 3.75 10V7.5H6.25C6.25 8.125 6.875 8.75 7.5 8.75H10H12.5C13.125 8.75 13.75 8.125 13.75 7.5H16.25V10Z" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="minimizeBtn" title="Minimize">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M5 10H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progressLabel">Getting started...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div class="messages-container" id="messagesContainer">
+            <div class="messages-wrapper" id="messagesWrapper">
+                <!-- Welcome message -->
+                <div class="message-group bot-group">
+                    <div class="message-avatar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="12" fill="#4F46E5"/>
+                            <path d="M12 6C9.514 6 7.5 8.014 7.5 10.5V12C7.5 14.486 9.514 16.5 12 16.5C14.486 16.5 16.5 14.486 16.5 12V10.5C16.5 8.014 14.486 6 12 6Z" fill="white"/>
+                            <circle cx="10.5" cy="11.25" r="1" fill="#4F46E5"/>
+                            <circle cx="13.5" cy="11.25" r="1" fill="#4F46E5"/>
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <div class="message bot-message">
+                            <p>👋 Welcome to GST Onboarding Assistant!</p>
+                            <p>I'll help you complete your seller registration and KYC verification in just a few minutes.</p>
+                            <p>Let's get started! Click "Start Onboarding" below.</p>
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+
+                <!-- Start button -->
+                <div class="action-buttons" id="startButtonContainer">
+                    <button class="primary-btn" id="startBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 18.3333C14.6024 18.3333 18.3333 14.6024 18.3333 10C18.3333 5.39763 14.6024 1.66667 10 1.66667C5.39763 1.66667 1.66667 5.39763 1.66667 10C1.66667 14.6024 5.39763 18.3333 10 18.3333Z" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M8.33333 7.5L13.3333 10L8.33333 12.5V7.5Z" fill="currentColor"/>
+                        </svg>
+                        Start Onboarding
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <div class="typing-avatar">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="10" fill="#4F46E5"/>
+                    <circle cx="10" cy="10" r="6" fill="white"/>
+                </svg>
+            </div>
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container" id="inputContainer" style="display: none;">
+            <!-- Text Input -->
+            <div class="input-wrapper" id="textInputWrapper">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Type your message..."
+                    autocomplete="off"
+                />
+                <button class="send-btn" id="sendBtn" disabled>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M18.3333 1.66667L9.16667 10.8333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18.3333 1.66667L12.5 18.3333L9.16667 10.8333L1.66667 7.5L18.3333 1.66667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- File Upload -->
+            <div class="file-upload-wrapper" id="fileUploadWrapper" style="display: none;">
+                <div class="file-drop-zone" id="fileDropZone">
+                    <input type="file" id="fileInput" accept=".pdf,image/*" style="display: none;">
+                    <div class="file-drop-content">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <path d="M24 32V16M24 16L18 22M24 16L30 22" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M40 28V38C40 39.1046 39.1046 40 38 40H10C8.89543 40 8 39.1046 8 38V28" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <p class="file-drop-title">Drop your file here or click to browse</p>
+                        <p class="file-drop-subtitle">PDF, JPG, PNG (Max 10MB)</p>
+                    </div>
+                    <button class="browse-btn" id="browseBtn">Browse Files</button>
+                </div>
+                <div class="file-preview" id="filePreview" style="display: none;">
+                    <div class="file-preview-content">
+                        <div class="file-icon">📄</div>
+                        <div class="file-info">
+                            <p class="file-name" id="fileName"></p>
+                            <p class="file-size" id="fileSize"></p>
+                        </div>
+                        <button class="file-remove-btn" id="fileRemoveBtn">×</button>
+                    </div>
+                    <button class="upload-btn" id="uploadBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 10.6667V2.66667M8 2.66667L5.33333 5.33333M8 2.66667L10.6667 5.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13.3333 10.6667V12.6667C13.3333 13.0203 13.1929 13.3594 12.9428 13.6095C12.6928 13.8595 12.3536 14 12 14H4C3.64638 14 3.30724 13.8595 3.05719 13.6095C2.80714 13.3594 2.66667 13.0203 2.66667 12.6667V10.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Upload File
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="chat-footer">
+            <p class="footer-text">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 11C8.76142 11 11 8.76142 11 6C11 3.23858 8.76142 1 6 1C3.23858 1 1 3.23858 1 6C1 8.76142 3.23858 11 6 11Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M6 4V6.5L7.5 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Powered by AI • Secure & Encrypted
+            </p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="chatbot.js"></script>
+</body>
+</html>

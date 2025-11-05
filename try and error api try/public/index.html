@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistral OCR Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 { color: white; text-align: center; margin-bottom: 30px; }
+        h2 { color: #667eea; margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        textarea { min-height: 100px; font-family: inherit; }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .preview { margin: 20px 0; }
+        .preview img { max-width: 100%; border-radius: 8px; }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Mistral OCR Test - Working!</h1>
+
+        <div style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <h2 style="margin: 0 0 10px 0; font-size: 24px;">🚚 NEW: Conversational Onboarding + KYC</h2>
+            <p style="margin: 0 0 15px 0; opacity: 0.95;">Auto-extract GST data, minimal questions, beautiful chat UI!</p>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="/onboarding.html" style="padding: 12px 24px; background: white; color: #4caf50; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">🎯 Start Onboarding</a>
+                <a href="/test-onboarding.html" style="padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">🧪 Test APIs</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📸 Vision OCR</h2>
+            <div class="input-group">
+                <label>Select Model</label>
+                <select id="model">
+                    <option value="pixtral-12b-2409">Pixtral 12B</option>
+                    <option value="pixtral-large-latest">Pixtral Large</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Upload Image or PDF</label>
+                <input type="file" id="imageFile" accept="image/*,application/pdf,.pdf">
+            </div>
+            <div style="background: #d1ecf1; border-left: 4px solid #0c5460; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+                <strong>📄 PDF Support:</strong> PDFs are automatically converted to high-quality images and processed page-by-page with Mistral OCR!
+            </div>
+            <div class="input-group">
+                <label>Prompt</label>
+                <textarea id="prompt">Extract all invoice details including invoice number, date, company name, amounts, and line items. Format as structured data.</textarea>
+            </div>
+            <div id="imagePreview" class="preview"></div>
+            <button onclick="analyzeImage()">🔍 Analyze Image</button>
+            <div id="visionResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>🎤 Audio Transcription</h2>
+            <div class="input-group">
+                <label>Upload Audio (All formats supported including WhatsApp .opus!)</label>
+                <input type="file" id="audioFile" accept="audio/*">
+            </div>
+            <div class="input-group">
+                <label>Transcription Quality (for .opus files)</label>
+                <select id="whisperModel">
+                    <option value="base">Base - Fast (Good quality)</option>
+                    <option value="small">Small - Balanced (Better accuracy)</option>
+                    <option value="medium">Medium - Slower (High accuracy)</option>
+                    <option value="large" selected>Large - Best ⭐ (Pincodes/Numbers)</option>
+                </select>
+            </div>
+            <div style="background: #d1ecf1; border-left: 4px solid #0c5460; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+                <strong>🎉 WhatsApp Audio (.opus) Fully Supported!</strong><br>
+                <span style="font-size: 13px;">Using high-quality Whisper AI model - FREE, no API costs!</span>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1; background: #e8f5e9; padding: 10px; border-radius: 6px;">
+                    <strong>✅ WhatsApp .opus</strong><br>
+                    <small>Local Whisper (Free)</small>
+                </div>
+                <div style="flex: 1; background: #e3f2fd; padding: 10px; border-radius: 6px;">
+                    <strong>✅ MP3, WAV, M4A</strong><br>
+                    <small>Mistral API or Local</small>
+                </div>
+            </div>
+            <button onclick="transcribeAudio()">🎵 Transcribe Audio</button>
+            <div id="audioResult"></div>
+        </div>
+    </div>
+
+    <!-- PDF.js Library for PDF to Image Conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const API_URL = 'http://localhost:3000/api';
+
+        document.getElementById('imageFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (file.type === 'application/pdf') {
+                        document.getElementById('imagePreview').innerHTML = 
+                            `<div style="padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                                📄 <strong>PDF Selected:</strong> ${file.name}<br>
+                                <small>Size: ${(file.size / 1024).toFixed(1)} KB</small>
+                            </div>`;
+                    } else {
+                        document.getElementById('imagePreview').innerHTML = 
+                            `<img src="${e.target.result}" alt="Preview">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Convert PDF to images using PDF.js
+        async function convertPDFToImages(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const images = [];
+            
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 2.0 }); // Higher scale = better quality
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                // Convert canvas to base64 image
+                const imageBase64 = canvas.toDataURL('image/png');
+                images.push(imageBase64);
+            }
+            
+            return images;
+        }
+
+        async function analyzeImage() {
+            const fileInput = document.getElementById('imageFile');
+            const model = document.getElementById('model').value;
+            const prompt = document.getElementById('prompt').value;
+            const resultDiv = document.getElementById('visionResult');
+
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select an image or PDF</div>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+            
+            try {
+                if (isPDF) {
+                    // Handle PDF: Convert to images first
+                    resultDiv.innerHTML = `<div style="padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                        🔄 Converting PDF to images... This may take a moment.
+                    </div>`;
+                    
+                    const images = await convertPDFToImages(file);
+                    
+                    resultDiv.innerHTML = `<div style="padding: 15px; background: #fff3cd; border-radius: 8px;">
+                        📄 PDF has ${images.length} page(s). Processing with Mistral OCR...
+                    </div>`;
+                    
+                    // Process each page
+                    let allContent = [];
+                    for (let i = 0; i < images.length; i++) {
+                        resultDiv.innerHTML = `<div style="padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                            ⏳ Processing page ${i + 1} of ${images.length}...
+                        </div>`;
+                        
+                        const response = await fetch(`${API_URL}/vision`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                imageBase64: images[i], 
+                                prompt: `${prompt} [Page ${i + 1} of ${images.length}]`, 
+                                model 
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            allContent.push(`\n=== PAGE ${i + 1} ===\n${data.content}`);
+                        } else {
+                            allContent.push(`\n=== PAGE ${i + 1} - ERROR ===\n${data.error}`);
+                        }
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ PDF Processed Successfully! (${images.length} pages)</div>
+                        <div class="result">
+                            <h3>Extracted Data from All Pages:</h3>
+                            <pre>${allContent.join('\n')}</pre>
+                        </div>
+                    `;
+                    
+                } else {
+                    // Handle regular image
+                    resultDiv.innerHTML = `<div>Analyzing image...</div>`;
+                    
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const imageBase64 = e.target.result;
+
+                        const response = await fetch(`${API_URL}/vision`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ imageBase64, prompt, model })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            resultDiv.innerHTML = `
+                                <div class="success">✅ Success! 🖼️ Image Processed</div>
+                                <div class="result">
+                                    <h3>Extracted Data:</h3>
+                                    <pre>${data.content}</pre>
+                                    <hr style="margin: 20px 0;">
+                                    <small>Model: ${data.model} | Tokens: ${JSON.stringify(data.usage)}</small>
+                                </div>
+                            `;
+                        } else {
+                            resultDiv.innerHTML = `<div class="error">Error: ${data.error}<br><small>${JSON.stringify(data.details || '')}</small></div>`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function transcribeAudio() {
+            const fileInput = document.getElementById('audioFile');
+            const resultDiv = document.getElementById('audioResult');
+
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select an audio file</div>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const fileName = file.name.toLowerCase();
+            const isOpus = fileName.endsWith('.opus') || fileName.includes('.waptt.');
+            
+            // Determine which endpoint to use
+            const endpoint = isOpus ? '/audio-local' : '/audio';
+            const processingMethod = isOpus ? 'Local Whisper (Free)' : 'Mistral API';
+
+            resultDiv.innerHTML = `
+                <div style="padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                    <strong>🔄 Transcribing with ${processingMethod}...</strong><br>
+                    <small>File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)</small>
+                    ${isOpus ? '<br><small style="color: #0c5460;">✨ Using local Whisper - No API costs!</small>' : ''}
+                </div>
+            `;
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', file);
+                
+                // Add model and language for local Whisper
+                if (isOpus) {
+                    const selectedModel = document.getElementById('whisperModel').value;
+                    formData.append('model', selectedModel);
+                    formData.append('language', 'en');
+                }
+
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    let badgeColor = isOpus ? '#28a745' : '#667eea';
+                    let badge = isOpus ? '🎉 Local Whisper (FREE)' : '☁️ Mistral API';
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Success! <span style="background: ${badgeColor}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;">${badge}</span>
+                        </div>
+                        <div class="result">
+                            <h3>Transcription:</h3>
+                            <pre>${data.transcription}</pre>
+                            <hr style="margin: 20px 0;">
+                            <small>
+                                <strong>Model:</strong> ${data.model} | 
+                                <strong>Source:</strong> ${data.source || 'mistral-api'}
+                                ${data.language ? ` | <strong>Language:</strong> ${data.language}` : ''}
+                                ${data.duration ? ` | <strong>Duration:</strong> ${data.duration.toFixed(1)}s` : ''}
+                                ${isOpus ? ' | 💰 <strong>Cost: $0.00</strong>' : ''}
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    let errorHtml = `<div class="error"><strong>Error: ${data.error}</strong><br>`;
+                    errorHtml += `<small>${data.message || ''}</small>`;
+                    
+                    if (data.hint) {
+                        errorHtml += `<br><br>💡 <strong>Hint:</strong> ${data.hint}`;
+                    }
+                    
+                    errorHtml += `</div>`;
+                    resultDiv.innerHTML = errorHtml;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
+

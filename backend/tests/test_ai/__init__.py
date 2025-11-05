@@ -1,0 +1,2 @@
+"""AI component tests"""
+
