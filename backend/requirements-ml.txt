@@ -1,0 +1,31 @@
+# ML Dependencies for Phase 2: Custom Learning Models
+# These are the core ML packages needed for the Workflow Predictor and other ML models
+
+# Core ML Framework
+torch==2.9.0
+transformers==4.57.1
+
+# Graph Neural Networks (for Workflow Predictor)
+torch-geometric==2.5.0
+torch-scatter==2.1.2
+torch-sparse==0.6.18
+
+# Training Infrastructure
+pytorch-lightning==2.5.0
+mlflow==3.5.0
+
+# Data Science
+scikit-learn==1.7.0
+numpy<2.0.0
+pandas==2.1.4
+
+# Graph Analysis
+networkx==3.2
+
+# Model Optimization
+onnx==1.19.1
+onnxruntime==1.23.2
+
+# Web Parsing
+beautifulsoup4==4.14.0
+lxml==4.9.3
