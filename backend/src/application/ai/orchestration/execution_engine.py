@@ -522,3 +522,156 @@ class ExecutionEngine:
                 final_results.append(result)
 
         return final_results
+
+
+# ============================================================================
+# VECTOR DB INTEGRATION FOR EXECUTION HISTORY
+# ============================================================================
+
+class VectorDBExecutionLogger:
+    """
+    Vector database logger for execution history
+
+    Stores execution results in ChromaDB for semantic search and learning.
+    This enables the system to find similar past executions and learn from them.
+    """
+
+    def __init__(self, collection_name: str = "execution_history"):
+        """
+        Initialize vector DB logger
+
+        Args:
+            collection_name: ChromaDB collection name
+        """
+        self.collection_name = collection_name
+        self.chroma_client = None
+        self.collection = None
+
+        logger.info(f"[VECTOR_DB_LOGGER] Initialized with collection: {collection_name}")
+
+    async def initialize(self):
+        """Initialize ChromaDB connection"""
+        try:
+            import chromadb
+            from chromadb.config import Settings
+
+            self.chroma_client = chromadb.Client(Settings(
+                anonymized_telemetry=False,
+                allow_reset=True
+            ))
+
+            # Get or create collection
+            try:
+                self.collection = self.chroma_client.get_collection(self.collection_name)
+            except:
+                self.collection = self.chroma_client.create_collection(
+                    name=self.collection_name,
+                    metadata={"description": "Execution history for learning"}
+                )
+
+            logger.info("[VECTOR_DB_LOGGER] ChromaDB initialized successfully")
+
+        except Exception as e:
+            logger.warning(f"[VECTOR_DB_LOGGER] ChromaDB initialization failed: {e}")
+            # Continue without vector DB
+            self.collection = None
+
+    async def log_execution(
+        self,
+        endpoint: EndpointInfo,
+        result: TestResult,
+        context: Dict[str, Any]
+    ):
+        """
+        Log execution result to vector DB
+
+        Args:
+            endpoint: Endpoint that was executed
+            result: Execution result
+            context: Additional context
+        """
+        if not self.collection:
+            return
+
+        try:
+            # Create document text for embedding
+            doc_text = f"""
+            Endpoint: {endpoint.method} {endpoint.url}
+            Category: {endpoint.category or 'unknown'}
+            Status: {result.status.value}
+            Latency: {result.latency_ms}ms
+            Retries: {result.retry_count}
+            Fixed: {result.fixed}
+            """
+
+            # Create metadata
+            metadata = {
+                'endpoint_id': endpoint.id,
+                'url': endpoint.url,
+                'method': endpoint.method,
+                'category': endpoint.category or 'unknown',
+                'status': result.status.value,
+                'latency_ms': result.latency_ms or 0,
+                'retry_count': result.retry_count,
+                'fixed': result.fixed,
+                'timestamp': result.timestamp.isoformat()
+            }
+
+            # Add to collection
+            doc_id = f"{endpoint.id}_{result.timestamp.timestamp()}"
+            self.collection.add(
+                documents=[doc_text],
+                metadatas=[metadata],
+                ids=[doc_id]
+            )
+
+            logger.debug(f"[VECTOR_DB_LOGGER] Logged execution: {doc_id}")
+
+        except Exception as e:
+            logger.warning(f"[VECTOR_DB_LOGGER] Failed to log execution: {e}")
+
+    async def find_similar_executions(
+        self,
+        endpoint: EndpointInfo,
+        limit: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        Find similar past executions using semantic search
+
+        Args:
+            endpoint: Endpoint to find similar executions for
+            limit: Maximum number of results
+
+        Returns:
+            List of similar execution results
+        """
+        if not self.collection:
+            return []
+
+        try:
+            query_text = f"""
+            Endpoint: {endpoint.method} {endpoint.url}
+            Category: {endpoint.category or 'unknown'}
+            """
+
+            results = self.collection.query(
+                query_texts=[query_text],
+                n_results=limit,
+                where={'status': 'passed'}  # Only get successful executions
+            )
+
+            similar = []
+            if results and results['metadatas']:
+                for metadata in results['metadatas'][0]:
+                    similar.append(metadata)
+
+            logger.debug(
+                f"[VECTOR_DB_LOGGER] Found {len(similar)} similar executions "
+                f"for {endpoint.id}"
+            )
+
+            return similar
+
+        except Exception as e:
+            logger.warning(f"[VECTOR_DB_LOGGER] Failed to find similar executions: {e}")
+            return []

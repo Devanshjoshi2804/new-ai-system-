@@ -87,6 +87,7 @@ from src.presentation.rest.ocr import router as ocr_router
 from src.presentation.rest.vector_db import router as vector_db_router
 from src.presentation.rest.simple_testing import router as simple_testing_router
 from src.presentation.rest.discovery import router as discovery_router
+from src.presentation.rest.autonomous_api import router as autonomous_router
 
 app.include_router(partners_router, prefix="/api", tags=["Partners"])
 app.include_router(documentation_router, prefix="/api", tags=["Documentation"])
@@ -97,6 +98,7 @@ app.include_router(ocr_router, prefix="/api", tags=["OCR"])
 app.include_router(vector_db_router, tags=["Vector DB"])
 app.include_router(simple_testing_router, tags=["Simple Testing - Clean & Working [START]"])
 app.include_router(discovery_router, prefix="/api", tags=["🚀 AI Discovery System"])
+app.include_router(autonomous_router, tags=["🤖 Autonomous Orchestration [Phase 3 & 4]"])
 
 # Root endpoint
 @app.get("/")

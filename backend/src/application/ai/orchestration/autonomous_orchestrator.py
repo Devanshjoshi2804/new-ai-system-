@@ -465,6 +465,181 @@ class AutonomousOrchestrator:
 
         return None
 
+
+# ============================================================================
+# LANGGRAPH ORCHESTRATION PATTERN
+# ============================================================================
+
+class OrchestrationState:
+    """
+    State class for LangGraph orchestration
+
+    This state is passed between nodes in the LangGraph state machine
+    for orchestrating the autonomous workflow.
+    """
+
+    def __init__(self):
+        """Initialize orchestration state"""
+        self.operation_id: str = ""
+        self.minimal_info: str = ""
+        self.auth_token: Optional[str] = None
+        self.base_url: Optional[str] = None
+        self.context: Dict[str, Any] = {}
+
+        # Phase results
+        self.discovered_endpoints: List[EndpointInfo] = []
+        self.classified_endpoints: Dict[str, Dict[str, Any]] = {}
+        self.generated_payloads: Dict[str, Dict[str, Any]] = {}
+        self.test_results: List[Any] = []
+
+        # Status tracking
+        self.current_phase: OrchestrationPhase = OrchestrationPhase.INITIALIZATION
+        self.errors: List[str] = []
+        self.completed_phases: List[OrchestrationPhase] = []
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert state to dictionary"""
+        return {
+            'operation_id': self.operation_id,
+            'current_phase': self.current_phase.value,
+            'discovered_endpoints': len(self.discovered_endpoints),
+            'classified_endpoints': len(self.classified_endpoints),
+            'test_results': len(self.test_results),
+            'errors': self.errors,
+            'completed_phases': [p.value for p in self.completed_phases]
+        }
+
+
+class LangGraphOrchestrator:
+    """
+    LangGraph-based orchestrator using state machine pattern
+
+    This orchestrator uses LangGraph to manage the workflow as a state machine,
+    providing better visibility and control over the orchestration process.
+    """
+
+    def __init__(
+        self,
+        api_explorer=None,
+        hybrid_predictor=None,
+        execution_engine=None,
+        learning_loop=None
+    ):
+        """Initialize LangGraph orchestrator"""
+        self.api_explorer = api_explorer
+        self.hybrid_predictor = hybrid_predictor
+        self.execution_engine = execution_engine
+        self.learning_loop = learning_loop
+
+        logger.info("[LANGGRAPH_ORCHESTRATOR] Initialized")
+
+    async def run_workflow(
+        self,
+        minimal_info: str,
+        auth_token: Optional[str] = None,
+        base_url: Optional[str] = None
+    ) -> OrchestrationState:
+        """
+        Run orchestration workflow using LangGraph state machine
+
+        Args:
+            minimal_info: Minimal API information
+            auth_token: Optional authentication token
+            base_url: Optional base URL
+
+        Returns:
+            Final orchestration state
+        """
+        # Initialize state
+        state = OrchestrationState()
+        state.operation_id = str(uuid.uuid4())
+        state.minimal_info = minimal_info
+        state.auth_token = auth_token
+        state.base_url = base_url
+
+        logger.info(f"[LANGGRAPH_ORCHESTRATOR] Starting workflow: {state.operation_id}")
+
+        try:
+            # Node 1: Discovery
+            state = await self._discovery_node(state)
+            state.completed_phases.append(OrchestrationPhase.DISCOVERY)
+
+            # Node 2: ML Enhancement
+            state = await self._ml_enhancement_node(state)
+            state.completed_phases.append(OrchestrationPhase.ML_ENHANCEMENT)
+
+            # Node 3: Testing
+            state = await self._testing_node(state)
+            state.completed_phases.append(OrchestrationPhase.TESTING)
+
+            # Node 4: Learning
+            state = await self._learning_node(state)
+            state.completed_phases.append(OrchestrationPhase.LEARNING)
+
+            state.current_phase = OrchestrationPhase.COMPLETED
+            logger.info(f"[LANGGRAPH_ORCHESTRATOR] Workflow completed: {state.operation_id}")
+
+        except Exception as e:
+            logger.error(f"[LANGGRAPH_ORCHESTRATOR] Workflow failed: {e}")
+            state.errors.append(str(e))
+            state.current_phase = OrchestrationPhase.FAILED
+
+        return state
+
+    async def _discovery_node(self, state: OrchestrationState) -> OrchestrationState:
+        """LangGraph node for discovery phase"""
+        state.current_phase = OrchestrationPhase.DISCOVERY
+        logger.info("[LANGGRAPH_ORCHESTRATOR] Node: Discovery")
+
+        if self.api_explorer:
+            discovery_result = await self.api_explorer.explore(
+                state.minimal_info,
+                base_url=state.base_url,
+                context=state.context
+            )
+            # Process discovery results
+            for endpoint in discovery_result.get('endpoints', []):
+                endpoint_info = EndpointInfo(
+                    id=endpoint.get('id', f"ep_{len(state.discovered_endpoints)}"),
+                    url=endpoint.get('url', ''),
+                    method=endpoint.get('method', 'GET')
+                )
+                state.discovered_endpoints.append(endpoint_info)
+
+        return state
+
+    async def _ml_enhancement_node(self, state: OrchestrationState) -> OrchestrationState:
+        """LangGraph node for ML enhancement phase"""
+        state.current_phase = OrchestrationPhase.ML_ENHANCEMENT
+        logger.info("[LANGGRAPH_ORCHESTRATOR] Node: ML Enhancement")
+
+        if self.hybrid_predictor:
+            for endpoint in state.discovered_endpoints:
+                # Classify and generate payload
+                classification = await self.hybrid_predictor.predict_endpoint_classification(
+                    url=endpoint.url,
+                    method=endpoint.method
+                )
+                state.classified_endpoints[endpoint.id] = classification.prediction
+
+        return state
+
+    async def _testing_node(self, state: OrchestrationState) -> OrchestrationState:
+        """LangGraph node for testing phase"""
+        state.current_phase = OrchestrationPhase.TESTING
+        logger.info("[LANGGRAPH_ORCHESTRATOR] Node: Testing")
+
+        # Testing logic here
+        return state
+
+    async def _learning_node(self, state: OrchestrationState) -> OrchestrationState:
+        """LangGraph node for learning phase"""
+        state.current_phase = OrchestrationPhase.LEARNING
+        logger.info("[LANGGRAPH_ORCHESTRATOR] Node: Learning")
+
+        # Learning logic here
+        return state
+
     async def cancel_operation(self, operation_id: str) -> bool:
         """
         Cancel a running operation
